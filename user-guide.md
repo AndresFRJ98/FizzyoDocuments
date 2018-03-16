@@ -15,14 +15,25 @@ Project - list of game files
 Inspector - Information about gameObjects.
 
 Find a tab called project, right click on the **Assets** folder, and click create.
-You should create 4 files in the assets folder:
+It is recommended you create files to organise your project.
 
 -   **Prefab**, (such as for NPC, enemy sprites - game objects you reuse)
 -   **Scenes**, (scenes are like levels, where you place your objects and build your game)
 -   **Texture**, (images for your game)
 -   **Scripts**. (scripts are attached to game objects to control their behaviour)
 
-When creating your game, you should organise by placing images, scripts, etc that are used in the game, into appropriate folders.
+You should not write just one script to handle everything. You can create multiple scripts for different purposes.
+
+## What makes a good Fizzyo Game
+
+You need to remember the condition of the game players, Cystic Fibrosis patients. 
+Therefore the game should-
+
+- Encourage the player to have a long, fairly strong breath.
+- Have an interval to allow the player to cough
+- Not punish the player for coughing
+
+When creating your game, you should place images, scripts, etc that are used in the game, into appropriate folders.
 
 ## Using the Fizzyo Framework package
 
@@ -36,6 +47,8 @@ The Fizzyo Framework contains scripts which allows your game to be compatible wi
 ```csharp
 FizzyoFramework.Instance. ~~~~
 ```
+
+Fizzyo games made using the package use Fizzyo Device as a controller. If you do not possess one of these, you can use a joystick, such as from the XBOX controller, to simulate the behaviour.
 
 ## Looking at the example game
 
@@ -142,78 +155,162 @@ void Update () {
     }
 }
 ```
+## Detecting breath start & end
 
-## Recording the score
+The using the Fizzyo Framework, the game can detect the breath start and end. You are able to code so the game takes certain action at the beginning of the breath, at the end of the breath.
+
+Example :
+```csharp
+void Start () {
+        FizzyoFramework.Instance.Recogniser.BreathStarted += OnBreathStarted;
+        FizzyoFramework.Instance.Recogniser.BreathComplete += OnBreathEnded;
+	}
+	
+void OnBreathStarted(object sender) {
+        doSomething();
+    }
+    
+void OnBreathEnded(object sender, ExhalationCompleteEventArgs e) {
+        breathCount = e.BreathCount;
+        breathLength = e.Breathlength;
+        breathQuality = e.BreathQuality;
+    }	
+```
+
+**OnBreathEnded** fires an **ExhalationCompleteEventArgs e** at the end of the breath. This can give information such as breath count, length, quality.
+
+The code together as a **playerController** script.
+
+```csharp
+    //for controlling the player gameobject
+    //gameobject build up jumpower with device breath blow
+    //gameobject releases energy and jumps with device button
+
+    private Rigidbody rb;
+	public static float jumpPower, breathLength;
+    public static bool IscubeOnPlatform = false, IsAbleToJump = false;
+    public static int breathCount, breathQuality;
+    private float pressure;
+
+    void Start () {
+        FizzyoFramework.Instance.Recogniser.BreathStarted += OnBreathStarted;
+        FizzyoFramework.Instance.Recogniser.BreathComplete += OnBreathEnded;
+        rb = this.gameObject.GetComponent<Rigidbody>();
+	}
+
+    void Update() {
+        jumpController();
+    }
+
+    void jumpController()
+    {
+
+        pressure = FizzyoFramework.Instance.Device.Pressure();
+
+        if (IsAbleToJump == true && jumpPower <= 1000) {
+            jumpPower = jumpPower + pressure;
+        }
+
+        //only jump on the ground / not in the air
+        //"jump" by adding force in the y direction
+        //gameobject is set to dynamic, so falls with gravity
+        if (IscubeOnPlatform == true){
+            if (FizzyoFramework.Instance.Device.ButtonDown()) {
+                rb.AddForce(0, 10 * jumpPower, 0);
+                IsAbleToJump = false;
+            }
+        }
+        // don't generate jump power if it shouldn't
+        else if (IsAbleToJump == false || IscubeOnPlatform == false){ jumpPower = 0; }
+    }
+    
+    // jumpPower resets every breath
+    void OnBreathStarted(object sender) { 
+        IsAbleToJump = true;
+        jumpPower = 0;
+    }
+ 
+	void OnBreathEnded(object sender, ExhalationCompleteEventArgs e) {
+        breathCount = e.BreathCount;
+        breathLength = e.Breathlength;
+        breathQuality = e.BreathQuality;
+    }
+
+    //When cube touches the platform
+    private void OnCollisionEnter(Collision collision) {
+        IscubeOnPlatform = true;
+    }
+    //When cube is not touching the platform (in the air)
+    private void OnCollisionExit(Collision collision) {
+        IscubeOnPlatform = false;
+    }
+}
+```
+
+## Submitting the score
 
 In Fizzyo games, game developers can code to submit highscores. And ofcourse to make a game more fun and lively, and competitive among players, the game should have a score / highscore system.
 
 The score for this game can be recorded as the highest point reached by the cube.
+Submit the score by calling;
+```csharp
+FizzyoFramework.Instance.Achievements.PostScore (yourScore);
+```
+Where yourScore is type int.
 
-Example:
+## Unlocking Achivements
+
+Games and achievements of the games need to be registered on the Fizzyo portal first. Once registered, there will be ID given to the achievements. To unlcock achievements, using the ID, call;
 
 ```csharp
-void Start () {
-    	originalPos = gameObject.transform.position.y;
-            }
-    
-	void update {
-    	height = gameObject.transform.position.y - originalPos;
+FizzyoFramework.Instance.Achievements.Unlock(AchievementID);
+```
+Where AchievementID is a string type.
 
-    	if (height > highest) {
-        	highest = height;
-        	score = (int)height;
-    	}
-   	 
+Code together as a **scoreController** script:
+
+```csharp
+
+    public static int scoreToPost = 0;
+    public static float currentScore = 0;
+    float highScore = 0;
+    float originalPos = 0;
+    public static GameObject toFollow; //Keep track of gameobject (cube)-s position
+    private bool startMeasure = false; //This is true once the cube first reaches the platform
+
+    string achieve10 = "abcd-efgh-1234-5678";
+
+	void Start () {
+        toFollow = GameObject.Find("Cube(Player)");
+	}
+	
+	void LateUpdate () {
+       
+        if (playerController.IscubeOnPlatform == true && startMeasure == false) {
+            originalPos = toFollow.transform.position.y;
+            startMeasure = true;
+        }
+
+        else if (playerController.IscubeOnPlatform == false && startMeasure == true) {
+            currentScore = toFollow.transform.position.y - originalPos;
+
+            if (currentScore > highScore) {
+                highScore = currentScore;
+                scoreToPost = (int)highScore;
+            }
+
+            if (currentScore > 10) {
+                FizzyoFramework.Instance.Achievements.UnlockAchievement(achieve10);
+            }
+        }
 	}
 
+    void OnApplicationQuit() {
+        FizzyoFramework.Instance.Achievements.PostScore(scoreToPost);
+    }
+}
 ```
+
 ## Calibration scene
 
-The Fizzyo device should be calibrated using the calibration scene which comes with the framework package. When building the game, this scene should be added in the build. By default the calibration scene appears when the game starts, but this can be disabled by unticking the box in the inspector.
-
-Example in one: 
-
-```csharp
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using Fizzyo;
-
-public class TutorialExample : MonoBehaviour {
-
-	Rigidbody rb;
-	float jumpPower;
-	float pressure;
-	float originalPos;
-	float height;
-	float highest;
-	int score;
-
-    // Use this for initialization
-    void Start () {
-    	rb = gameObject.GetComponent<Rigidbody>();
-    	originalPos = gameObject.transform.position.y;
-    }
-    
-    // Update is called once per frame
-    void Update () {
-
-    	pressure = FizzyoFramework.Instance.Device.Pressure();
-
-    	jumpPower = jumpPower + pressure;
-
-    	if (FizzyoFramework.Instance.Device.ButtonDown()) {
-        	rb.AddForce(0, 5 * jumpPower, 0);
-    	}
-
-    	height = gameObject.transform.position.y - originalPos;
-
-    	if (height > highest){
-        	highest = height;
-        	score = (int)height;
-    	}
-   	 
-	}
-}
-
-```
+The Fizzyo device should be calibrated using the calibration scene which comes with the framework package. When building the game, this scene should be added in the build. By default the calibration scene appears when the game starts, but this can be disabled by unticking the box in the inspector. The breath recorded in the calibraiton scene is used as a referenec to what a good breath is.
