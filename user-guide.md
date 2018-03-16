@@ -187,7 +187,7 @@ The code together as a **playerController** script.
     //gameobject releases energy and jumps with device button
 
     private Rigidbody rb;
-	public static float jumpPower, breathLength;
+    public static float jumpPower, breathLength;
     public static bool IscubeOnPlatform = false, IsAbleToJump = false;
     public static int breathCount, breathQuality;
     private float pressure;
