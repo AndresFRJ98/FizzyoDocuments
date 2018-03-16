@@ -22,6 +22,7 @@ It is recommended you create files to organise your project.
 -   **Texture**, (images for your game)
 -   **Scripts**. (scripts are attached to game objects to control their behaviour)
 
+When creating your game, you should place images, scripts, etc that are used in the game, into appropriate folders.
 You should not write just one script to handle everything. You can create multiple scripts for different purposes.
 
 ## What makes a good Fizzyo Game
@@ -33,7 +34,7 @@ Therefore the game should-
 - Have an interval to allow the player to cough
 - Not punish the player for coughing
 
-When creating your game, you should place images, scripts, etc that are used in the game, into appropriate folders.
+
 
 ## Using the Fizzyo Framework package
 
