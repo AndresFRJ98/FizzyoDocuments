@@ -319,6 +319,7 @@ The Fizzyo device should be calibrated using the calibration scene which comes w
 ## Exporting the game as Universal Windows Platform
 
 Fizzyo games are to be played on a windows tablet. When the game is ready to be played, it should be exported as UWP.
+-  Open your game in Unity.
 -  Select **File** > **Build Settings** then select Universal Windows Platform, then build. (To check some settings before you build, click player settings)
 -  Once the build process is complete, open in Visual Studios, the **yourgamename.sln** in the build destination folder.
 -  Click on **package.appmanifest**
