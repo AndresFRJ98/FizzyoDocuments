@@ -315,3 +315,14 @@ Code together as a **scoreController** script:
 ## Calibration scene
 
 The Fizzyo device should be calibrated using the calibration scene which comes with the framework package. When building the game, this scene should be added in the build. By default the calibration scene appears when the game starts, but this can be disabled by unticking the box in the inspector. The breath recorded in the calibraiton scene is used as a referenec to what a good breath is.
+
+## Exporting the game as Universal Windows Platform
+
+Fizzyo games are to be played on a windows tablet. When the game is ready to be played, it should be exported as UWP.
+-  Select **File** > **Build Settings** then select Universal Windows Platform, then build. (To check some settings before you build, click player settings)
+-  Once the build process is complete, open in Visual Studios, the **yourgamename.sln** in the build destination folder.
+-  Click on **package.appmanifest**
+-  go **Capabilities** > tick **Internet (Client & Server)**, this allows your game to connect to the internet
+-  Right click on where **yourgamename(Universal Windows)** > **Store** > **Create App Packages**
+-  Follow the navigation and the app packages will be created.
+-  Game is built as UWP.
